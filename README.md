@@ -15,4 +15,4 @@ NestJS TypeScript starter repository.
 npm install
 
 ## Run project
-npm run start:dev
+npm run start:dev 
