@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anonymous Support Feed</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">Anonymous Support Space</p>
+        <h1>Share what you're feeling. Receive gentle replies.</h1>
+        <p class="subtitle">
+          No names, no profiles, just a safe public space for support.
+        </p>
+      </section>
+
+      <section class="panel">
+        <form id="post-form" class="composer">
+          <label class="composer-label" for="post-message">
+            Share your feelings anonymously...
+          </label>
+          <textarea
+            id="post-message"
+            name="message"
+            placeholder="Share your feelings anonymously..."
+            maxlength="500"
+            required
+          ></textarea>
+          <div class="composer-footer">
+            <span id="post-feedback" class="feedback" aria-live="polite"></span>
+            <button type="submit">Post</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="feed-section">
+        <div class="feed-header">
+          <h2>Support Feed</h2>
+          <button id="refresh-feed" class="secondary-button" type="button">
+            Refresh
+          </button>
+        </div>
+        <div id="posts-feed" class="feed"></div>
+      </section>
+    </main>
+
+    <template id="post-card-template">
+      <article class="post-card">
+        <div class="post-meta">
+          <span class="post-timestamp"></span>
+        </div>
+        <p class="post-message"></p>
+        <div class="post-actions">
+          <button class="secondary-button reply-toggle" type="button">
+            Reply
+          </button>
+        </div>
+        <div class="reply-box hidden">
+          <textarea
+            class="reply-message"
+            placeholder="Write a supportive reply..."
+            maxlength="500"
+          ></textarea>
+          <div class="reply-actions">
+            <span class="feedback reply-feedback" aria-live="polite"></span>
+            <button class="send-reply" type="button">Send Reply</button>
+          </div>
+        </div>
+        <div class="replies"></div>
+      </article>
+    </template>
+
+    <script>
+      const postForm = document.getElementById('post-form');
+      const postMessage = document.getElementById('post-message');
+      const postFeedback = document.getElementById('post-feedback');
+      const refreshFeedButton = document.getElementById('refresh-feed');
+      const postsFeed = document.getElementById('posts-feed');
+      const template = document.getElementById('post-card-template');
+
+      const formatTimestamp = (isoString) =>
+        new Date(isoString).toLocaleString([], {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        });
+
+      async function fetchJson(url, options) {
+        const response = await fetch(url, {
+          headers: { 'Content-Type': 'application/json' },
+          ...options,
+        });
+
+        if (!response.ok) {
+          let message = 'Something went wrong.';
+
+          try {
+            const data = await response.json();
+            message = data.message || message;
+          } catch {
+            message = 'Something went wrong.';
+          }
+
+          throw new Error(message);
+        }
+
+        return response.json();
+      }
+
+      function createReplyElement(reply) {
+        const replyElement = document.createElement('div');
+        replyElement.className = 'reply-item';
+        replyElement.innerHTML = `
+          <p>${reply.message}</p>
+          <span>${formatTimestamp(reply.createdAt)}</span>
+        `;
+        return replyElement;
+      }
+
+      async function loadReplies(postId, repliesContainer) {
+        repliesContainer.innerHTML = '<p class="loading">Loading replies...</p>';
+
+        try {
+          const replies = await fetchJson(`/posts/${postId}/replies`);
+          repliesContainer.innerHTML = '';
+
+          if (!replies.length) {
+            repliesContainer.innerHTML =
+              '<p class="empty-state">No replies yet. Be the first to support this post.</p>';
+            return;
+          }
+
+          replies.forEach((reply) => {
+            repliesContainer.appendChild(createReplyElement(reply));
+          });
+        } catch (error) {
+          repliesContainer.innerHTML = `<p class="error-text">${error.message}</p>`;
+        }
+      }
+
+      function renderPost(post) {
+        const fragment = template.content.cloneNode(true);
+        const card = fragment.querySelector('.post-card');
+        const timestamp = fragment.querySelector('.post-timestamp');
+        const message = fragment.querySelector('.post-message');
+        const replyToggle = fragment.querySelector('.reply-toggle');
+        const replyBox = fragment.querySelector('.reply-box');
+        const replyInput = fragment.querySelector('.reply-message');
+        const replyFeedback = fragment.querySelector('.reply-feedback');
+        const sendReplyButton = fragment.querySelector('.send-reply');
+        const repliesContainer = fragment.querySelector('.replies');
+
+        card.dataset.postId = post.id;
+        timestamp.textContent = formatTimestamp(post.createdAt);
+        message.textContent = post.message;
+
+        replyToggle.addEventListener('click', async () => {
+          replyBox.classList.toggle('hidden');
+
+          if (!replyBox.classList.contains('hidden')) {
+            await loadReplies(post.id, repliesContainer);
+          }
+        });
+
+        sendReplyButton.addEventListener('click', async () => {
+          const message = replyInput.value.trim();
+
+          if (!message) {
+            replyFeedback.textContent = 'Reply message is required.';
+            return;
+          }
+
+          replyFeedback.textContent = 'Sending reply...';
+
+          try {
+            const reply = await fetchJson(`/posts/${post.id}/replies`, {
+              method: 'POST',
+              body: JSON.stringify({ message }),
+            });
+
+            replyInput.value = '';
+            replyFeedback.textContent = 'Reply sent.';
+
+            const emptyState = repliesContainer.querySelector('.empty-state');
+            if (emptyState) {
+              emptyState.remove();
+            }
+
+            repliesContainer.appendChild(createReplyElement(reply));
+          } catch (error) {
+            replyFeedback.textContent = error.message;
+          }
+        });
+
+        return fragment;
+      }
+
+      async function loadPosts() {
+        postsFeed.innerHTML = '<p class="loading">Loading posts...</p>';
+
+        try {
+          const posts = await fetchJson('/posts');
+          postsFeed.innerHTML = '';
+
+          if (!posts.length) {
+            postsFeed.innerHTML =
+              '<p class="empty-state">No posts yet. Start the conversation with a kind, anonymous post.</p>';
+            return;
+          }
+
+          posts.forEach((post) => {
+            postsFeed.appendChild(renderPost(post));
+          });
+        } catch (error) {
+          postsFeed.innerHTML = `<p class="error-text">${error.message}</p>`;
+        }
+      }
+
+      postForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const message = postMessage.value.trim();
+
+        if (!message) {
+          postFeedback.textContent = 'Message is required.';
+          return;
+        }
+
+        postFeedback.textContent = 'Posting...';
+
+        try {
+          await fetchJson('/posts', {
+            method: 'POST',
+            body: JSON.stringify({ message }),
+          });
+
+          postMessage.value = '';
+          postFeedback.textContent = 'Your anonymous post is live.';
+          await loadPosts();
+        } catch (error) {
+          postFeedback.textContent = error.message;
+        }
+      });
+
+      refreshFeedButton.addEventListener('click', loadPosts);
+      loadPosts();
+    </script>
+  </body>
+</html>
