@@ -1,64 +1,35 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-
-export interface SupportReply {
-  id: number;
-  message: string;
-  createdAt: string;
-}
-
-export interface SupportPost {
-  id: number;
-  message: string;
-  createdAt: string;
-  replies: SupportReply[];
-}
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Post } from './post.entity';
 
 @Injectable()
 export class PostsService {
-  private readonly posts: SupportPost[] = [];
-  private nextPostId = 1;
-  private nextReplyId = 1;
+  constructor(
+    @InjectRepository(Post)
+    private postRepository: Repository<Post>,
+  ) {}
 
-  create(message: string): Omit<SupportPost, 'replies'> {
-    const post: SupportPost = {
-      id: this.nextPostId++,
-      message,
-      createdAt: new Date().toISOString(),
-      replies: [],
-    };
-
-    this.posts.unshift(post);
-
-    return this.toPostResponse(post);
+  async create(message: string): Promise<Post> {
+    const post = this.postRepository.create({ message });
+    return this.postRepository.save(post);
   }
 
-  findAll(): Array<Omit<SupportPost, 'replies'>> {
-    return this.posts.map((post) => this.toPostResponse(post));
+  async findAll(): Promise<Post[]> {
+    return this.postRepository.find({
+      order: { createdAt: 'DESC' },
+      relations: ['replies'],
+    });
   }
 
-  findPostById(id: number): SupportPost {
-    const post = this.posts.find((entry) => entry.id === id);
-
+  async findOne(id: number): Promise<Post> {
+    const post = await this.postRepository.findOne({
+      where: { id },
+      relations: ['replies'],
+    });
     if (!post) {
-      throw new NotFoundException(`Post with id ${id} was not found.`);
+      throw new Error(`Post with id ${id} not found`);
     }
-
     return post;
-  }
-
-  createReply(message: string): SupportReply {
-    return {
-      id: this.nextReplyId++,
-      message,
-      createdAt: new Date().toISOString(),
-    };
-  }
-
-  private toPostResponse(post: SupportPost): Omit<SupportPost, 'replies'> {
-    return {
-      id: post.id,
-      message: post.message,
-      createdAt: post.createdAt,
-    };
   }
 }

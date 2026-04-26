@@ -8,4 +8,19 @@ export class AppController {
   getHome(@Res() response: Response) {
     return response.sendFile(join(process.cwd(), 'views', 'index.html'));
   }
+
+  @Get('login')
+  getLogin(@Res() response: Response) {
+    return response.sendFile(join(process.cwd(), 'views', 'login.html'));
+  }
+
+  @Get('register')
+  getRegister(@Res() response: Response) {
+    return response.sendFile(join(process.cwd(), 'views', 'register.html'));
+  }
+
+  @Get('dashboard')
+  getDashboardPage(@Res() response: Response) {
+    return response.sendFile(join(process.cwd(), 'views', 'dashboard.html'));
+  }
 }

@@ -1,0 +1,220 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Anonymous Support</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero-stack">
+        <article class="dashboard-card panel">
+          <p class="section-title">Anonymous ID</p>
+          <div class="dashboard-id" style="text-align: center; width: 100%; height: 80px; display: flex; align-items: center; justify-content: center;">Loading...</div>
+          <div class="dashboard-actions">
+            <a href="/" class="button-link secondary-button">Feed</a>
+            <button type="button" id="logout-btn">Logout</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel" style="margin-top: 28px;">
+        <textarea id="postMessage" placeholder="Share your feelings..."></textarea>
+        <div class="composer-footer">
+          <button type="button">Post</button>
+        </div>
+      </section>
+
+      <section class="feed-section">
+        <div class="feed-header">
+          <h2>Feed</h2>
+          <button type="button" class="secondary-button">Refresh</button>
+        </div>
+        <div class="feed">
+        </div>
+      </section>
+    </main>
+    <script>
+      // Fetch and display user ID
+      async function loadDashboard() {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          window.location.href = '/login';
+          return;
+        }
+
+        try {
+          const response = await fetch('/auth/dashboard', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            document.querySelector('.dashboard-id').textContent = data.userId;
+          } else {
+            // Token invalid, redirect to login
+            localStorage.removeItem('access_token');
+            window.location.href = '/login';
+          }
+        } catch (error) {
+          console.error('Error loading dashboard:', error);
+          localStorage.removeItem('access_token');
+          window.location.href = '/login';
+        }
+      }
+
+      // Logout functionality
+      document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.removeItem('access_token');
+        window.location.href = '/';
+      });
+
+      // Load posts
+      async function loadPosts() {
+        try {
+          const response = await fetch('/posts');
+          if (response.ok) {
+            const posts = await response.json();
+            displayPosts(posts);
+          }
+        } catch (error) {
+          console.error('Error loading posts:', error);
+        }
+      }
+
+      // Display posts in feed
+      function displayPosts(posts) {
+        const feed = document.querySelector('.feed');
+        feed.innerHTML = '';
+
+        posts.forEach(post => {
+          const postElement = document.createElement('article');
+          postElement.className = 'post-card';
+          postElement.innerHTML = `
+            <div class="post-meta">
+              <span class="post-timestamp">${new Date(post.createdAt).toLocaleString()}</span>
+            </div>
+            <p class="post-message">${post.message}</p>
+            <div class="post-actions">
+              <button type="button" class="secondary-button reply-btn" data-post-id="${post.id}">Reply</button>
+            </div>
+            <div class="replies" id="replies-${post.id}">
+              <!-- Replies will be loaded here -->
+            </div>
+          `;
+          feed.appendChild(postElement);
+
+          // Load replies for this post
+          loadReplies(post.id);
+        });
+      }
+
+      // Load replies for a post
+      async function loadReplies(postId) {
+        try {
+          const response = await fetch(`/posts/${postId}/replies`);
+          if (response.ok) {
+            const replies = await response.json();
+            displayReplies(postId, replies);
+          }
+        } catch (error) {
+          console.error('Error loading replies:', error);
+        }
+      }
+
+      // Display replies
+      function displayReplies(postId, replies) {
+        const repliesContainer = document.getElementById(`replies-${postId}`);
+        repliesContainer.innerHTML = '';
+
+        replies.forEach(reply => {
+          const replyElement = document.createElement('article');
+          replyElement.className = 'reply-item';
+          replyElement.innerHTML = `
+            <p>${reply.message}</p>
+            <span>${new Date(reply.createdAt).toLocaleString()}</span>
+          `;
+          repliesContainer.appendChild(replyElement);
+        });
+      }
+
+      // Handle posting
+      document.querySelector('.composer-footer button').addEventListener('click', async () => {
+        const message = document.getElementById('postMessage').value.trim();
+        if (!message) return;
+
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          window.location.href = '/login';
+          return;
+        }
+
+        try {
+          const response = await fetch('/posts', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ message }),
+          });
+
+          if (response.ok) {
+            document.getElementById('postMessage').value = '';
+            loadPosts(); // Refresh the feed
+          } else if (response.status === 401) {
+            localStorage.removeItem('access_token');
+            window.location.href = '/login';
+          }
+        } catch (error) {
+          console.error('Error posting:', error);
+        }
+      });
+
+      // Handle reply button clicks
+      document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('reply-btn')) {
+          const postId = e.target.dataset.postId;
+          const replyMessage = prompt('Enter your reply:');
+          if (!replyMessage || !replyMessage.trim()) return;
+
+          const token = localStorage.getItem('access_token');
+          if (!token) {
+            window.location.href = '/login';
+            return;
+          }
+
+          try {
+            const response = await fetch(`/posts/${postId}/replies`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({ message: replyMessage.trim() }),
+            });
+
+            if (response.ok) {
+              loadReplies(postId); // Refresh replies for this post
+            } else if (response.status === 401) {
+              localStorage.removeItem('access_token');
+              window.location.href = '/login';
+            }
+          } catch (error) {
+            console.error('Error replying:', error);
+          }
+        }
+      });
+
+      // Handle refresh button
+      document.querySelector('.feed-header button').addEventListener('click', loadPosts);
+
+      // Load dashboard on page load
+      loadDashboard();
+      loadPosts();
+    </script>
+  </body>
+</html>

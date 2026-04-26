@@ -1,21 +1,32 @@
 import { Injectable } from '@nestjs/common';
-import { PostsService, SupportReply } from '../posts/posts.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Reply } from './reply.entity';
+import { Post } from '../posts/post.entity';
 
 @Injectable()
 export class RepliesService {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    @InjectRepository(Reply)
+    private replyRepository: Repository<Reply>,
+    @InjectRepository(Post)
+    private postRepository: Repository<Post>,
+  ) {}
 
-  addReply(postId: number, message: string): SupportReply {
-    const post = this.postsService.findPostById(postId);
-    const reply = this.postsService.createReply(message);
+  async create(postId: number, message: string): Promise<Reply> {
+    const post = await this.postRepository.findOne({ where: { id: postId } });
+    if (!post) {
+      throw new Error(`Post with id ${postId} not found`);
+    }
 
-    post.replies.push(reply);
-
-    return reply;
+    const reply = this.replyRepository.create({ message, post });
+    return this.replyRepository.save(reply);
   }
 
-  getReplies(postId: number): SupportReply[] {
-    const post = this.postsService.findPostById(postId);
-    return [...post.replies];
+  async findByPostId(postId: number): Promise<Reply[]> {
+    return this.replyRepository.find({
+      where: { post: { id: postId } },
+      order: { createdAt: 'ASC' },
+    });
   }
 }

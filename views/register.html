@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - Anonymous Support</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell auth-shell">
+      <section class="auth-layout">
+        <article class="auth-hero">
+          <p class="eyebrow">Anonymous Support Space</p>
+          <h1 class="hero-title">Create a gentle place to speak honestly.</h1>
+          <p class="hero-subtitle">
+            Register once, keep your identity protected, and use the platform to share emotions or offer comfort to someone else.
+          </p>
+          <div class="pill-list" style="margin-top: 24px;">
+            <span class="pill">Easy registration</span>
+            <span class="pill">Anonymous posting</span>
+            <span class="pill">Supportive replies</span>
+          </div>
+        </article>
+
+        <article class="auth-card">
+          <p class="section-title">Register</p>
+          <h2>Create your safe space</h2>
+          <form>
+            <div>
+              <label for="name" class="form-label">Full Name</label>
+              <input type="text" id="name" placeholder="Your full name" required />
+            </div>
+            <div>
+              <label for="email" class="form-label">Email</label>
+              <input type="email" id="email" placeholder="you@example.com" required />
+            </div>
+            <div>
+              <label for="password" class="form-label">Password</label>
+              <input type="password" id="password" placeholder="Create a password" minlength="6" required />
+            </div>
+            <div>
+              <label for="confirmPassword" class="form-label">Confirm Password</label>
+              <input type="password" id="confirmPassword" placeholder="Confirm your password" minlength="6" required />
+            </div>
+            <div style="margin-top: 24px;">
+              <button type="submit">Create account</button>
+            </div>
+          </form>
+          <p class="auth-note">Already registered? <a href="/login">Login instead</a></p>
+        </article>
+      </section>
+    </main>
+    <script>
+      const form = document.querySelector('form');
+      const messageDiv = document.createElement('div');
+      messageDiv.style.marginTop = '16px';
+      messageDiv.style.padding = '12px';
+      messageDiv.style.borderRadius = '4px';
+      messageDiv.style.display = 'none';
+      form.appendChild(messageDiv);
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        try {
+          const response = await fetch('/auth/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, email, password, confirmPassword }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            messageDiv.style.display = 'block';
+            messageDiv.style.backgroundColor = '#d4edda';
+            messageDiv.style.color = '#155724';
+            messageDiv.style.border = '1px solid #c3e6cb';
+            messageDiv.textContent = data.message;
+            form.reset();
+          } else {
+            messageDiv.style.display = 'block';
+            messageDiv.style.backgroundColor = '#f8d7da';
+            messageDiv.style.color = '#721c24';
+            messageDiv.style.border = '1px solid #f5c6cb';
+            messageDiv.textContent = data.message || 'Registration failed';
+          }
+        } catch (error) {
+          messageDiv.style.display = 'block';
+          messageDiv.style.backgroundColor = '#f8d7da';
+          messageDiv.style.color = '#721c24';
+          messageDiv.style.border = '1px solid #f5c6cb';
+          messageDiv.textContent = 'An error occurred. Please try again.';
+        }
+      });
+    </script>
+  </body>
+</html>
