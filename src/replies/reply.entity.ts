@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, OneToMany } from 'typeorm';
 import { Post } from '../posts/post.entity';
+import { Reaction } from '../reactions/reaction.entity';
 
 @Entity()
 export class Reply {
@@ -14,4 +15,7 @@ export class Reply {
 
   @ManyToOne(() => Post, post => post.replies)
   post: Post;
+
+  @OneToMany(() => Reaction, reaction => reaction.reply)
+  reactions: Reaction[];
 }

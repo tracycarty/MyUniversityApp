@@ -10,5 +10,6 @@ import { Post } from '../posts/post.entity';
   imports: [TypeOrmModule.forFeature([Reply, Post]), PostsModule],
   controllers: [RepliesController],
   providers: [RepliesService],
+  exports: [RepliesService],
 })
 export class RepliesModule {}

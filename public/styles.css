@@ -395,6 +395,44 @@ button:hover,
   line-height: 1.7;
 }
 
+.reactions-panel {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.reaction-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--surface-soft);
+  color: var(--accent-dark);
+  border: 1px solid rgba(82, 121, 111, 0.22);
+  border-radius: 999px;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.reaction-btn:hover {
+  transform: scale(1.05);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.reaction-btn span {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.post-reactions,
+.reply-reactions {
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
 .hidden {
   display: none;
 }

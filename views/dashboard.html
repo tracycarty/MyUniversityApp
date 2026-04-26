@@ -98,6 +98,9 @@
               <span class="post-timestamp">${new Date(post.createdAt).toLocaleString()}</span>
             </div>
             <p class="post-message">${post.message}</p>
+            <div class="post-reactions" id="post-reactions-${post.id}">
+              <!-- Reactions will be loaded here -->
+            </div>
             <div class="post-actions">
               <button type="button" class="secondary-button reply-btn" data-post-id="${post.id}">Reply</button>
             </div>
@@ -107,7 +110,8 @@
           `;
           feed.appendChild(postElement);
 
-          // Load replies for this post
+          // Load reactions and replies for this post
+          loadReactions('post', post.id);
           loadReplies(post.id);
         });
       }
@@ -136,9 +140,96 @@
           replyElement.innerHTML = `
             <p>${reply.message}</p>
             <span>${new Date(reply.createdAt).toLocaleString()}</span>
+            <div class="reply-reactions" id="reply-reactions-${reply.id}">
+              <!-- Reactions will be loaded here -->
+            </div>
           `;
           repliesContainer.appendChild(replyElement);
+
+          // Load reactions for this reply
+          loadReactions('reply', reply.id);
         });
+      }
+
+      // Load reactions for a post or reply
+      async function loadReactions(type, id) {
+        try {
+          const endpoint = type === 'post' ? `/reactions/post/${id}` : `/reactions/reply/${id}`;
+          const response = await fetch(endpoint);
+          if (response.ok) {
+            const reactions = await response.json();
+            displayReactions(type, id, reactions);
+          }
+        } catch (error) {
+          console.error(`Error loading ${type} reactions:`, error);
+        }
+      }
+
+      // Display reactions with buttons
+      function displayReactions(type, id, reactions) {
+        const containerId = type === 'post' ? `post-reactions-${id}` : `reply-reactions-${id}`;
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = '';
+        const reactionContainer = document.createElement('div');
+        reactionContainer.className = 'reactions-panel';
+
+        // Heart reaction
+        const heartCount = reactions.find(r => r.type === 'heart')?.count || 0;
+        const heartBtn = document.createElement('button');
+        heartBtn.type = 'button';
+        heartBtn.className = 'reaction-btn';
+        heartBtn.innerHTML = `❤️ <span>${heartCount}</span>`;
+        heartBtn.addEventListener('click', () => addReaction(type, id, 'heart'));
+        reactionContainer.appendChild(heartBtn);
+
+        // Care reaction
+        const careCount = reactions.find(r => r.type === 'care')?.count || 0;
+        const careBtn = document.createElement('button');
+        careBtn.type = 'button';
+        careBtn.className = 'reaction-btn';
+        careBtn.innerHTML = `🤗 <span>${careCount}</span>`;
+        careBtn.addEventListener('click', () => addReaction(type, id, 'care'));
+        reactionContainer.appendChild(careBtn);
+
+        container.appendChild(reactionContainer);
+      }
+
+      // Add reaction
+      async function addReaction(type, id, reactionType) {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          window.location.href = '/login';
+          return;
+        }
+
+        try {
+          const payload = { type: reactionType };
+          if (type === 'post') {
+            payload.postId = id;
+          } else {
+            payload.replyId = id;
+          }
+
+          const response = await fetch('/reactions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (response.ok) {
+            loadReactions(type, id); // Refresh reactions
+          } else if (response.status === 401) {
+            localStorage.removeItem('access_token');
+            window.location.href = '/login';
+          }
+        } catch (error) {
+          console.error('Error adding reaction:', error);
+        }
       }
 
       // Handle posting

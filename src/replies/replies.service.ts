@@ -29,4 +29,15 @@ export class RepliesService {
       order: { createdAt: 'ASC' },
     });
   }
+
+  async findOne(id: number): Promise<Reply> {
+    const reply = await this.replyRepository.findOne({
+      where: { id },
+    });
+    if (!reply) {
+      throw new Error(`Reply with id ${id} not found`);
+    }
+    return reply;
+  }
 }
+
