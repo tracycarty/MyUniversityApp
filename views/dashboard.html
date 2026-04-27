@@ -10,8 +10,7 @@
     <main class="app-shell">
       <section class="hero-stack">
         <article class="dashboard-card panel">
-          <p class="section-title">Anonymous ID</p>
-          <div class="dashboard-id" style="text-align: center; width: 100%; height: 80px; display: flex; align-items: center; justify-content: center;">Loading...</div>
+          <p class="section-title" style="text-align: center;">Anonymous Emotional Support</p>
           <div class="dashboard-actions">
             <a href="/" class="button-link secondary-button">Feed</a>
             <button type="button" id="logout-btn">Logout</button>
@@ -53,7 +52,7 @@
 
           if (response.ok) {
             const data = await response.json();
-            document.querySelector('.dashboard-id').textContent = data.userId;
+            // Dashboard updated to show title only
           } else {
             // Token invalid, redirect to login
             localStorage.removeItem('access_token');
@@ -95,6 +94,7 @@
           postElement.className = 'post-card';
           postElement.innerHTML = `
             <div class="post-meta">
+              <span class="post-owner">Posted by: Anonymous</span>
               <span class="post-timestamp">${new Date(post.createdAt).toLocaleString()}</span>
             </div>
             <p class="post-message">${post.message}</p>
@@ -139,7 +139,7 @@
           replyElement.className = 'reply-item';
           replyElement.innerHTML = `
             <p>${reply.message}</p>
-            <span>${new Date(reply.createdAt).toLocaleString()}</span>
+            <span>Reply by: Anonymous</span>
             <div class="reply-reactions" id="reply-reactions-${reply.id}">
               <!-- Reactions will be loaded here -->
             </div>

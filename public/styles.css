@@ -61,7 +61,8 @@ textarea {
 
 .hero-stack {
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
+  grid-template-columns: minmax(0, min(860px, 100%));
+  justify-content: center;
   gap: 28px;
   align-items: stretch;
 }
@@ -211,6 +212,10 @@ textarea {
   padding: 30px;
 }
 
+.dashboard-card {
+  text-align: center;
+}
+
 .composer-label,
 .form-label {
   display: block;
@@ -294,10 +299,15 @@ button:hover,
 .feed-header,
 .composer-footer,
 .reply-actions,
-.post-actions,
-.dashboard-actions {
+.post-actions {
   align-items: center;
   justify-content: space-between;
+}
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
 }
 
 .feed {

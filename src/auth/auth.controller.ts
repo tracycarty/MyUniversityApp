@@ -21,6 +21,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('dashboard')
   async getDashboard(@Request() req) {
-    return this.authService.getDashboard(req.user.userId);
+    return this.authService.getDashboard(req.user);
   }
 }

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './post.entity';
+import { User } from '../user/user.entity';
 
 @Injectable()
 export class PostsService {
@@ -10,22 +11,22 @@ export class PostsService {
     private postRepository: Repository<Post>,
   ) {}
 
-  async create(message: string): Promise<Post> {
-    const post = this.postRepository.create({ message });
+  async create(message: string, user: User): Promise<Post> {
+    const post = this.postRepository.create({ message, user });
     return this.postRepository.save(post);
   }
 
   async findAll(): Promise<Post[]> {
     return this.postRepository.find({
       order: { createdAt: 'DESC' },
-      relations: ['replies'],
+      relations: ['replies', 'user'],
     });
   }
 
   async findOne(id: number): Promise<Post> {
     const post = await this.postRepository.findOne({
       where: { id },
-      relations: ['replies'],
+      relations: ['replies', 'user'],
     });
     if (!post) {
       throw new Error(`Post with id ${id} not found`);

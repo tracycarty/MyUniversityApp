@@ -61,7 +61,7 @@ export class AuthService {
     return { access_token, message: 'Login successful' };
   }
 
-  async getDashboard(userId: string): Promise<{ userId: string }> {
-    return { userId };
+  async getDashboard(user: User): Promise<{ name: string }> {
+    return { name: user.name };
   }
 }
