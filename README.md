@@ -2,26 +2,28 @@
 
 ## 📌 Description
 
-This project is a simple web application built using **Specs-Driven Development**.
-It allows users to anonymously share their thoughts and receive supportive replies from others.
+This is an anonymous emotional support web application built with **NestJS** and **TypeORM**.
+Users register and log in before joining a safe, anonymous feed where they can share feelings, reply to posts, and react with support.
 
-The system ensures privacy by not storing any user identity, creating a safe space for emotional expression.
+The user interface keeps identities hidden in the feed, while the backend uses authentication to protect access.
 
 ---
 
 ## 🚀 Features
 
-### 1. Anonymous Support Post
-
-* Users can create and submit anonymous messages
-* Posts appear in a public support feed
-* Each post includes a timestamp
-
-### 2. Supportive Replies
-
-* Users can reply to posts with supportive messages
-* Replies are displayed under the corresponding post
-* All replies are anonymous
+* **Authentication**
+  * User registration with name, email, password, and password confirmation
+  * Login with JWT-based authentication
+  * Protected dashboard and post creation endpoints
+* **Anonymous Support Feed**
+  * Create anonymous support posts from the dashboard
+  * Display posts with timestamps but hide author identity
+* **Replies & Support**
+  * Reply to posts with anonymous supportive messages
+  * Replies are shown under the associated post
+* **Reactions**
+  * Add simple reactions to posts and replies
+  * Reaction counts are shown in the feed
 
 ---
 
@@ -29,74 +31,93 @@ The system ensures privacy by not storing any user identity, creating a safe spa
 
 * Backend: NestJS
 * Language: TypeScript
-* UI: HTML + CSS (served by NestJS)
-* Version Control: Git
+* Database: TypeORM with MySQL (configurable via `.env`)
+* Frontend: HTML + CSS served from `views/`
+* Authentication: Passport + JWT
 
 ---
 
 ## 📂 Project Structure
 
 ```
-docs/
-  specs/
-    assignment-1-mini-spec.md
-
 src/
+  auth/
   posts/
   replies/
-
+  reactions/
+  user/
+  common/
+  app.module.ts
 views/
+  dashboard.html
   index.html
-
+  login.html
+  register.html
 public/
   styles.css
+.env
+README.md
 ```
 
 ---
 
-## ⚙️ How to Run the Project
+## ⚙️ Setup & Run
 
 1. Install dependencies:
 
-```
+```bash
 npm install
 ```
 
-2. Run the application:
+2. Create or update `.env` with database settings, for example:
 
+```env
+DB_TYPE=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=root
+DB_PASSWORD=
+DB_DATABASE=emotional_support
+DB_SYNCHRONIZE=true
+JWT_SECRET=your-secret-key
 ```
+
+3. Start the application:
+
+```bash
 npm run start
 ```
 
-3. Open in browser:
+4. Open the app in your browser:
 
-```
+```bash
 http://localhost:3000
 ```
 
 ---
 
-## 📸 Screenshots
+## 📌 Notes
 
-
-* Create Post
-![alt text](image.png)
-
-* View Posts
-![alt text](image-1.png)
-
-* Reply to Post
-![alt text](image-2.png)
+* The feed content is presented anonymously in the UI, even though users must authenticate to post and reply.
+* Using `DB_SYNCHRONIZE=true` will sync database schema automatically; disable it in production.
 
 ---
+## Screenshots
 
-## 📖 Notes
+Landing Page
+![alt text](image-3.png)
 
-* This project uses **in-memory storage**, so data will reset when the server restarts.
-* No user authentication is implemented to maintain anonymity.
+Registration Page
+![alt text](image-4.png)
+
+Login Page
+![alt text](image-5.png)
+
+Dashboard
+![alt text](image-6.png)
+
 
 ---
-
 ## 👨‍💻 Author
 
 Tracy Jann Wanelly C. Alcero
